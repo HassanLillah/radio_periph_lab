@@ -1,6 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use IEEE.std_logic_signed.all;
 
 entity full_radio_v1_0_S00_AXI is
 	generic (
@@ -17,6 +18,7 @@ entity full_radio_v1_0_S00_AXI is
 	port (
 		-- Users to add ports here
         m_axis_tdata : out std_logic_vector(31 downto 0);
+        m_axis_tready : in std_logic;
         m_axis_tvalid : out std_logic;
 		-- User ports ends
 		-- Do not modify the ports beyond this line
@@ -118,6 +120,54 @@ architecture arch_imp of full_radio_v1_0_S00_AXI is
 	signal reg_data_out	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 	signal byte_index	: integer;
 	signal aw_en	: std_logic;
+	
+	---- Radio Signal DDS signals
+	signal radio_signal_tvalid : std_logic;
+	signal radio_signal_tdata : std_logic_vector(15 downto 0);
+	signal radio_combiner_s_axis_tvalid : std_logic_vector(1 downto 0);
+	signal radio_combiner_s_axis_tdata  : std_logic_vector(31 downto 0);
+	signal radio_signal_complex_tvalid : std_logic;
+	signal radio_signal_complex_tdata : std_logic_vector(31 downto 0);
+	
+	---- Combiner signals
+	signal const1 : std_logic;
+	signal const16 : std_logic_vector(15 downto 0);
+	
+	---- Tuner signals
+	signal m_axis_tvalid_tune : STD_LOGIC;
+	signal m_axis_tdata_tune : STD_LOGIC_VECTOR(31 downto 0);
+	
+	---- Mixed signals
+	signal m_axis_tvalid_mixer : STD_LOGIC;
+	signal m_axis_tdata_mixer : STD_LOGIC_VECTOR(47 downto 0);
+	
+	---- FIR0
+	signal m_axis_tvalid_fir0 : STD_LOGIC;
+	signal m_axis_tdata_fir0 : STD_LOGIC_VECTOR(47 downto 0);
+	
+	---- FIR1
+    signal m_axis_tvalid_fir1 : STD_LOGIC;
+	signal m_axis_tdata_fir1 : STD_LOGIC_VECTOR(47 downto 0);
+	
+	---- Broadcaster0
+	signal m_axis_tvalid_bcast0 : STD_LOGIC_VECTOR(1 DOWNTO 0);
+	signal m_axis_tdata_bcast0 : STD_LOGIC_VECTOR(31 DOWNTO 0);
+	
+	---- Combiner1
+	
+
+COMPONENT dds_compiler_1
+  PORT (
+    aclk : IN STD_LOGIC;
+    aresetn : IN STD_LOGIC;
+    s_axis_phase_tvalid : IN STD_LOGIC;
+    s_axis_phase_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+    m_axis_data_tvalid : OUT STD_LOGIC;
+    m_axis_data_tdata : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    m_axis_phase_tvalid : OUT STD_LOGIC;
+    m_axis_phase_tdata : OUT STD_LOGIC_VECTOR(31 DOWNTO 0) 
+  );
+END COMPONENT;
 
 COMPONENT dds_compiler_0
   PORT (
@@ -128,9 +178,83 @@ COMPONENT dds_compiler_0
     m_axis_data_tvalid : OUT STD_LOGIC;
     m_axis_data_tdata : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
   );
-    END COMPONENT;
+END COMPONENT;
+    
+COMPONENT axis_combiner_0
+  PORT (
+    aclk : IN STD_LOGIC;
+    aresetn : IN STD_LOGIC;
+    s_axis_tvalid : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+    s_axis_tready : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+    s_axis_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+    m_axis_tvalid : OUT STD_LOGIC;
+    m_axis_tready : IN STD_LOGIC;
+    m_axis_tdata : OUT STD_LOGIC_VECTOR(31 DOWNTO 0) 
+  );
+END COMPONENT;
+
+COMPONENT cmpy_0
+  PORT (
+    aclk : IN STD_LOGIC;
+    s_axis_a_tvalid : IN STD_LOGIC;
+    s_axis_a_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+    s_axis_b_tvalid : IN STD_LOGIC;
+    s_axis_b_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+    m_axis_dout_tvalid : OUT STD_LOGIC;
+    m_axis_dout_tdata : OUT STD_LOGIC_VECTOR(47 DOWNTO 0) 
+  );
+END COMPONENT;
+
+COMPONENT fir_compiler_0
+  PORT (
+    aclk : IN STD_LOGIC;
+    s_axis_data_tvalid : IN STD_LOGIC;
+    s_axis_data_tready : OUT STD_LOGIC;
+    s_axis_data_tdata : IN STD_LOGIC_VECTOR(47 DOWNTO 0);
+    m_axis_data_tvalid : OUT STD_LOGIC;
+    m_axis_data_tdata : OUT STD_LOGIC_VECTOR(47 DOWNTO 0) 
+  );
+END COMPONENT;
+
+COMPONENT fir_compiler_1
+  PORT (
+    aclk : IN STD_LOGIC;
+    s_axis_data_tvalid : IN STD_LOGIC;
+    s_axis_data_tready : OUT STD_LOGIC;
+    s_axis_data_tdata : IN STD_LOGIC_VECTOR(47 DOWNTO 0);
+    m_axis_data_tvalid : OUT STD_LOGIC;
+    m_axis_data_tdata : OUT STD_LOGIC_VECTOR(47 DOWNTO 0) 
+  );
+END COMPONENT;
+
+COMPONENT axis_broadcaster_0
+  PORT (
+    aclk : IN STD_LOGIC;
+    aresetn : IN STD_LOGIC;
+    s_axis_tvalid : IN STD_LOGIC;
+    s_axis_tdata : IN STD_LOGIC_VECTOR(47 DOWNTO 0);
+    m_axis_tvalid : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+    m_axis_tdata : OUT STD_LOGIC_VECTOR(31 DOWNTO 0) 
+  );
+END COMPONENT;
+
+COMPONENT axis_combiner_1
+  PORT (
+    aclk : IN STD_LOGIC;
+    aresetn : IN STD_LOGIC;
+    s_axis_tvalid : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+    s_axis_tready : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+    s_axis_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+    m_axis_tvalid : OUT STD_LOGIC;
+    m_axis_tready : IN STD_LOGIC;
+    m_axis_tdata : OUT STD_LOGIC_VECTOR(31 DOWNTO 0) 
+  );
+END COMPONENT;
 
 begin
+    -- Constants assignment
+    const1  <= '1';
+    const16 <= x"0000";
 	-- I/O Connections assignments
 
 	S_AXI_AWREADY	<= axi_awready;
@@ -229,7 +353,7 @@ begin
 	      slv_reg0 <= (others => '0');
 	      slv_reg1 <= (others => '0');
 	      slv_reg2 <= (others => '0');
-	      slv_reg3 <= (others => '0');
+	      --slv_reg3 <= (others => '0');
 	    else
 	      loc_addr := axi_awaddr(ADDR_LSB + OPT_MEM_ADDR_BITS downto ADDR_LSB);
 	      if (slv_reg_wren = '1') then
@@ -263,19 +387,30 @@ begin
 	              if ( S_AXI_WSTRB(byte_index) = '1' ) then
 	                -- Respective byte enables are asserted as per write strobes                   
 	                -- slave registor 3
-	                slv_reg3(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
+	                --slv_reg3(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
 	              end if;
 	            end loop;
 	          when others =>
 	            slv_reg0 <= slv_reg0;
 	            slv_reg1 <= slv_reg1;
 	            slv_reg2 <= slv_reg2;
-	            slv_reg3 <= slv_reg3;
+	            --slv_reg3 <= slv_reg3;
 	        end case;
 	      end if;
 	    end if;
 	  end if;                   
 	end process; 
+
+    process (S_AXI_ACLK)
+    begin
+      if rising_edge(S_AXI_ACLK) then
+        if S_AXI_ARESETN = '0' then
+          slv_reg3 <= (others => '0');
+        else
+          slv_reg3 <= slv_reg3 + 1;
+        end if;     
+      end if; 
+    end process;
 
 	-- Implement write response logic generation
 	-- The write response and response valid signals are asserted by the slave 
@@ -367,7 +502,7 @@ begin
 	      when b"00" =>
 	        reg_data_out <= slv_reg0;
 	      when b"01" =>
-	        reg_data_out <= x"DEADBEEF";
+	        reg_data_out <= slv_reg1;
 	      when b"10" =>
 	        reg_data_out <= slv_reg2;
 	      when b"11" =>
@@ -397,18 +532,107 @@ begin
 
 
 	-- Add user logic here
+  
+  --your_instance_name : dds_compiler_0
+  --PORT MAP (
+  --  aclk => s_axi_aclk,
+  --  aresetn => '1',
+  --  s_axis_phase_tvalid => '1',
+  --  s_axis_phase_tdata => slv_reg0,
+  --  m_axis_data_tvalid => m_axis_tvalid,
+  --  m_axis_data_tdata => m_axis_tdata
+  --);
+	-- User logic ends
 
-your_instance_name : dds_compiler_0
+radio_signal : dds_compiler_1
   PORT MAP (
     aclk => s_axi_aclk,
-    aresetn => '1',
+    aresetn => slv_reg2(0),
     s_axis_phase_tvalid => '1',
     s_axis_phase_tdata => slv_reg0,
-    m_axis_data_tvalid => m_axis_tvalid,
-    m_axis_data_tdata => m_axis_tdata
+    m_axis_data_tvalid => radio_signal_tvalid,
+    m_axis_data_tdata => radio_signal_tdata,
+    m_axis_phase_tvalid => open,
+    m_axis_phase_tdata => open
   );
 
+radio_combiner_s_axis_tvalid <= '1' & radio_signal_tvalid;
+radio_combiner_s_axis_tdata <= x"0000" & radio_signal_tdata;
 
+complex_radio_signal : axis_combiner_0
+  PORT MAP (
+    aclk => s_axi_aclk,
+    aresetn => slv_reg2(0),
+    s_axis_tvalid => radio_combiner_s_axis_tvalid,
+    s_axis_tready => open,
+    s_axis_tdata => radio_combiner_s_axis_tdata,
+    m_axis_tvalid => radio_signal_complex_tvalid,
+    m_axis_tready => '1',
+    m_axis_tdata => radio_signal_complex_tdata
+  );
+  
+  tune_signal : dds_compiler_0
+  PORT MAP (
+    aclk => s_axi_aclk,
+    aresetn => slv_reg2(0),
+    s_axis_phase_tvalid => '1',
+    s_axis_phase_tdata => slv_reg1,
+    m_axis_data_tvalid => m_axis_tvalid_tune,
+    m_axis_data_tdata => m_axis_tdata_tune
+  );
+  
+  mixer : cmpy_0
+  PORT MAP (
+    aclk => s_axi_aclk,
+    s_axis_a_tvalid => radio_signal_complex_tvalid,
+    s_axis_a_tdata => radio_signal_complex_tdata,
+    s_axis_b_tvalid => m_axis_tvalid_tune,
+    s_axis_b_tdata => m_axis_tdata_tune,
+    m_axis_dout_tvalid => m_axis_tvalid_mixer,
+    m_axis_dout_tdata => m_axis_tdata_mixer
+  );
+  
+  fir_1 : fir_compiler_0
+  PORT MAP (
+    aclk => s_axi_aclk,
+    s_axis_data_tvalid => m_axis_tvalid_mixer,
+    s_axis_data_tready => open,
+    s_axis_data_tdata => m_axis_tdata_mixer,
+    m_axis_data_tvalid => m_axis_tvalid_fir0,
+    m_axis_data_tdata => m_axis_tdata_fir0
+  );
+  
+  fir2 : fir_compiler_1
+  PORT MAP (
+    aclk => s_axi_aclk,
+    s_axis_data_tvalid => m_axis_tvalid_fir0,
+    s_axis_data_tready => open,
+    s_axis_data_tdata => m_axis_tdata_fir0,
+    m_axis_data_tvalid => m_axis_tvalid_fir1,
+    m_axis_data_tdata => m_axis_tdata_fir1
+  );
+  
+  broadcast_real_imag : axis_broadcaster_0
+  PORT MAP (
+    aclk => s_axi_aclk,
+    aresetn => slv_reg2(0),
+    s_axis_tvalid => m_axis_tvalid_fir1,
+    s_axis_tdata => m_axis_tdata_fir1,
+    m_axis_tvalid => m_axis_tvalid_bcast0,
+    m_axis_tdata => m_axis_tdata_bcast0
+  );
+  
+  combine_real_imag : axis_combiner_1
+  PORT MAP (
+    aclk => s_axi_aclk,
+    aresetn => slv_reg2(0),
+    s_axis_tvalid => m_axis_tvalid_bcast0,
+    s_axis_tready => open,
+    s_axis_tdata => m_axis_tdata_bcast0,
+    m_axis_tvalid => m_axis_tvalid,
+    m_axis_tready => m_axis_tready,
+    m_axis_tdata => m_axis_tdata
+  );
 	-- User logic ends
 
 end arch_imp;
