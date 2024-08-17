@@ -5,7 +5,7 @@
     "cell_name": "full_radio_v1_0_S00_AXI_inst/combine_real_imag",
     "component_reference": "xilinx.com:ip:axis_combiner:1.1",
     "ip_revision": "27",
-    "gen_directory": "../../../../vivado/radio_periph_lab.tmp/full_radio_v1_0/full_radio_v1_0.gen/sources_1/ip/axis_combiner_1",
+    "gen_directory": "../../../../vivado/radio_periph_lab.tmp/full_radio_v1_0_project/full_radio_v1_0_project.gen/sources_1/ip/axis_combiner_1",
     "parameters": {
       "component_parameters": {
         "TDATA_NUM_BYTES": [ { "value": "2", "value_src": "user", "resolve_type": "user", "format": "long", "usage": "all" } ],
@@ -13,7 +13,7 @@
         "TDEST_WIDTH": [ { "value": "0", "resolve_type": "user", "format": "long", "usage": "all" } ],
         "TUSER_WIDTH": [ { "value": "0", "resolve_type": "user", "format": "long", "usage": "all" } ],
         "NUM_SI": [ { "value": "2", "resolve_type": "user", "format": "long", "usage": "all" } ],
-        "HAS_TSTRB": [ { "value": "0", "resolve_type": "user", "format": "long", "usage": "all" } ],
+        "HAS_TSTRB": [ { "value": "0", "value_src": "user", "resolve_type": "user", "format": "long", "usage": "all" } ],
         "HAS_TKEEP": [ { "value": "0", "resolve_type": "user", "format": "long", "usage": "all" } ],
         "HAS_TLAST": [ { "value": "0", "resolve_type": "user", "format": "long", "usage": "all" } ],
         "MASTER_PORT_NUM": [ { "value": "0", "resolve_type": "user", "format": "long", "enabled": false, "usage": "all" } ],
@@ -48,7 +48,7 @@
         "IPCONTEXT": [ { "value": "IP_Flow" } ],
         "IPREVISION": [ { "value": "27" } ],
         "MANAGED": [ { "value": "TRUE" } ],
-        "OUTPUTDIR": [ { "value": "../../../../vivado/radio_periph_lab.tmp/full_radio_v1_0/full_radio_v1_0.gen/sources_1/ip/axis_combiner_1" } ],
+        "OUTPUTDIR": [ { "value": "../../../../vivado/radio_periph_lab.tmp/full_radio_v1_0_project/full_radio_v1_0_project.gen/sources_1/ip/axis_combiner_1" } ],
         "SELECTEDSIMMODEL": [ { "value": "" } ],
         "SHAREDDIR": [ { "value": "." } ],
         "SWVERSION": [ { "value": "2023.2" } ],
