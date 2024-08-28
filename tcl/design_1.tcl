@@ -610,9 +610,6 @@ proc create_root_design { parentCell } {
   # Create instance: simpel_fifo_0, and set properties
   set simpel_fifo_0 [ create_bd_cell -type ip -vlnv xilinx.com:user:simpel_fifo:1.0 simpel_fifo_0 ]
 
-  # Create instance: rst_clk125_125M, and set properties
-  set rst_clk125_125M [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_clk125_125M ]
-
   # Create instance: axis_broadcaster_0, and set properties
   set axis_broadcaster_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_broadcaster:1.1 axis_broadcaster_0 ]
 
@@ -637,12 +634,11 @@ connect_bd_intf_net -intf_net [get_bd_intf_nets ps7_0_axi_periph_M00_AXI] [get_b
   connect_bd_net -net lowlevel_dac_intfc_0_mclk [get_bd_pins lowlevel_dac_intfc_0/mclk] [get_bd_ports mclk]
   connect_bd_net -net lowlevel_dac_intfc_0_sdata [get_bd_pins lowlevel_dac_intfc_0/sdata] [get_bd_ports sdata]
   connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK] [get_bd_pins ps7_0_axi_periph/ACLK] [get_bd_pins ps7_0_axi_periph/S00_ACLK] [get_bd_pins rst_ps7_0_125M/slowest_sync_clk]
-  connect_bd_net -net processing_system7_0_FCLK_RESET0_N [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst_ps7_0_125M/ext_reset_in] [get_bd_pins rst_clk125_125M/ext_reset_in]
-  connect_bd_net -net rst_clk125_125M_peripheral_aresetn [get_bd_pins rst_clk125_125M/peripheral_aresetn] [get_bd_pins ps7_0_axi_periph/M02_ARESETN]
+  connect_bd_net -net processing_system7_0_FCLK_RESET0_N [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst_ps7_0_125M/ext_reset_in]
   connect_bd_net -net rst_ps7_0_125M_peripheral_aresetn [get_bd_pins rst_ps7_0_125M/peripheral_aresetn] [get_bd_pins ps7_0_axi_periph/ARESETN] [get_bd_pins ps7_0_axi_periph/S00_ARESETN] [get_bd_pins xpm_cdc_gen_0/src_rst]
   connect_bd_net -net rst_ps7_0_125M_peripheral_reset [get_bd_pins rst_ps7_0_125M/peripheral_reset]
-  connect_bd_net -net s00_axi_aclk_0_1 [get_bd_ports clk125] [get_bd_pins axi_iic_0/s_axi_aclk] [get_bd_pins lowlevel_dac_intfc_0/clk125] [get_bd_pins ps7_0_axi_periph/M00_ACLK] [get_bd_pins ps7_0_axi_periph/M01_ACLK] [get_bd_pins system_ila_0/clk] [get_bd_pins xpm_cdc_gen_0/dest_clk] [get_bd_pins full_radio_0/s00_axi_aclk] [get_bd_pins ps7_0_axi_periph/M02_ACLK] [get_bd_pins rst_clk125_125M/slowest_sync_clk] [get_bd_pins axis_broadcaster_0/aclk] [get_bd_pins simpel_fifo_0/s00_axi_aclk]
-  connect_bd_net -net xpm_cdc_gen_0_dest_rst_out [get_bd_pins xpm_cdc_gen_0/dest_rst_out] [get_bd_pins axi_iic_0/s_axi_aresetn] [get_bd_pins ps7_0_axi_periph/M00_ARESETN] [get_bd_pins ps7_0_axi_periph/M01_ARESETN] [get_bd_pins system_ila_0/resetn] [get_bd_pins full_radio_0/s00_axi_aresetn] [get_bd_pins axis_broadcaster_0/aresetn] [get_bd_pins simpel_fifo_0/s00_axi_aresetn]
+  connect_bd_net -net s00_axi_aclk_0_1 [get_bd_ports clk125] [get_bd_pins axi_iic_0/s_axi_aclk] [get_bd_pins lowlevel_dac_intfc_0/clk125] [get_bd_pins ps7_0_axi_periph/M00_ACLK] [get_bd_pins ps7_0_axi_periph/M01_ACLK] [get_bd_pins system_ila_0/clk] [get_bd_pins xpm_cdc_gen_0/dest_clk] [get_bd_pins full_radio_0/s00_axi_aclk] [get_bd_pins ps7_0_axi_periph/M02_ACLK] [get_bd_pins axis_broadcaster_0/aclk] [get_bd_pins simpel_fifo_0/s00_axi_aclk]
+  connect_bd_net -net xpm_cdc_gen_0_dest_rst_out [get_bd_pins xpm_cdc_gen_0/dest_rst_out] [get_bd_pins axi_iic_0/s_axi_aresetn] [get_bd_pins ps7_0_axi_periph/M00_ARESETN] [get_bd_pins ps7_0_axi_periph/M01_ARESETN] [get_bd_pins system_ila_0/resetn] [get_bd_pins full_radio_0/s00_axi_aresetn] [get_bd_pins axis_broadcaster_0/aresetn] [get_bd_pins simpel_fifo_0/s00_axi_aresetn] [get_bd_pins ps7_0_axi_periph/M02_ARESETN]
 
   # Create address segments
   assign_bd_address -offset 0x41600000 -range 0x00010000 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs axi_iic_0/S_AXI/Reg] -force
